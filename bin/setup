@@ -28,7 +28,7 @@ sudo chmod +x $vivaldi
 sudo apt install ./$vivaldi
 
 # Add bin to path
-echo '/home/'$(whoami)'
+echo 'export PATH=$PATH:/home/'$(whoami)'/bin' >> etc/profile
 
 # Switch to awesomewm
 echo '[Autologin]'		> /etc/sddm.conf
