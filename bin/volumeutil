@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+
+import subprocess
+import os
+import json
+import sys
+import fileinput
+
+class Output:
+	def __init__(self):
+		self.index = 0
+		self.on = False
+		self.vol = 0
+		self.sym = '\uf26c'
+
+def getOutputs():
+	proc = subprocess.run(["pacmd", "list-sinks"], capture_output=True)
+	raw = proc.stdout.decode()
+	rawoutputs = raw.split('\n')
+
+	outputs = []
+	for line in rawoutputs:
+		line = line.lower()
+		if "index:" in line:
+			outputs.append(Output())
+			outputs[-1].index = int(line.split()[-1])
+			outputs[-1].on = '*' in line	
+		elif "volume:" in line and not "base" in line and not "steps" in line:
+			outputs[-1].vol = int([word for word in line.split() if '%' in word][0][:-1])
+		elif "description" in line:
+			if "headset" in line:
+				outputs[-1].sym = '\uf590'
+			else:
+				outputs[-1].sym = '\uf26c'
+	return outputs
+
+def getInputs():
+	proc = subprocess.run(["pacmd", "list-sink-inputs"], capture_output=True)
+	raw = proc.stdout.decode().split()
+	
+	sinks = []
+	for (index, word) in enumerate(raw):
+		if word == "index:":
+			sinks.append(int(raw[index+1]))
+	return sinks
+
+if os.environ.get('BLOCK_BUTTON'):
+	outputs = getOutputs()
+	newOut = ([i for (i, out) in enumerate(outputs) if out.on][0] + 1) % len(outputs)
+	subprocess.run(["pacmd", "set-default-sink", str(outputs[newOut].index)], capture_output=True)
+	for input in getInputs():
+		subprocess.run(["pacmd", "move-sink-input", str(input), str(outputs[newOut].index)], capture_output=True)
+
+out = []
+for output in getOutputs():
+	if output.on:
+		out.append("[" + output.sym + " " + str(output.vol) + "%]")
+	else:
+		out.append(output.sym)
+print(' '.join(out))
+	

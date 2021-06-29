@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+
+from os.path import isfile, expanduser 
+import yaml
+import collections
+from shutil import copyfile
+
+# open files
+cfg = "/home/jan/.config/parser/"
+with open(cfg+"aliases.yml") as file: aliases = yaml.safe_load(file)
+with open(cfg+"files.yml") as file: files = yaml.safe_load(file)
+
+# flatten nested aliases dictionary
+def flatten(d, parent_key='', sep='.'):
+    items = []
+    for k, v in d.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if isinstance(v, collections.MutableMapping):
+            items.extend(flatten(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
+aliases = flatten(aliases)
+
+# find and replace in all files
+for fout in files:
+	# open fout and fin, create if necessary
+	fout = fout.strip().replace('~', expanduser('~'))
+	fin = fout.split('/')
+	fin[-1] = "EDIT_" + fin[-1]
+	fin = '/'.join(fin)
+	if not isfile(fin):
+		if isfile(fout): copyfile(fout, fin)
+		else: continue
+	fout = open(fout, 'w')
+	fin = open(fin, 'r')
+
+	# write parsed fin to output
+	output = fin.read()
+	for key, val in aliases.items():
+		output = output.replace('%' + str(key) + '%', str(val))
+
+	# write and close
+	fout.write(output)
+	fout.close()
+	fin.close()

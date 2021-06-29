@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Install basics
+sudo apt update && sudo apt upgrade -y
+sudo apt install awesome ranger thunderbird dmenu neovim
+
+# Install alacritty
+sudo add-apt-repository ppa:aslatter/ppa -y
+sudo apt-get update && sudo apt install alacritty
+
+# Install discord
+rm -r ~/Downloads
+mkdir ~/Downloads
+cd ~/Downloads
+wget -O discord.deb https://discordapp.com/api/download?platform=linux&format=deb
+sudo chmod +x discord.deb
+sudo apt install ./discord.deb
+
+# Install spotify
+curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg | sudo apt-key add - 
+echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
+sudo apt-get update && sudo apt-get install spotify-client
+
+# Install vivaldi, needs manual download
+firefox https://vivaldi.com/download/
+vivaldi=$(ls | grep vivaldi)
+sudo chmod +x $vivaldi
+sudo apt install ./$vivaldi
+
+# Add bin to path
+echo '/home/'$(whoami)'
+
+# Switch to awesomewm
+echo '[Autologin]'		> /etc/sddm.conf
+echo 'User='$(whoami)	>> /etc/sddm.conf
+echo 'Session=awesome'	>> /etc/sddm.conf
+
+# Time fix for dual boot
+timedatectl set-local-rtc 1 --adjust-system-clock
